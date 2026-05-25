@@ -18,16 +18,6 @@ function parseResponse(response) {
   return { data, message }
 }
 
-export async function getMyRank() {
-  try {
-    const response = await api.get('/ranking/me')
-    return parseResponse(response)
-  } catch (error) {
-    if (error instanceof RankingError) throw error
-    throw new RankingError(extractErrorMessage(error), error.response?.status)
-  }
-}
-
 export async function getLeaderboard(type = 'alltime') {
   try {
     const response = await api.get('/ranking/leaderboard', { params: { type } })
@@ -37,3 +27,36 @@ export async function getLeaderboard(type = 'alltime') {
     throw new RankingError(extractErrorMessage(error), error.response?.status)
   }
 }
+
+export async function getOnlineUsers() {
+  try {
+    const response = await api.get('/ranking/online')
+    return parseResponse(response)
+  } catch (error) {
+    if (error instanceof RankingError) throw error
+    throw new RankingError(extractErrorMessage(error), error.response?.status)
+  }
+}
+
+export async function getMyRanking() {
+  try {
+    const response = await api.get('/ranking/me')
+    return parseResponse(response)
+  } catch (error) {
+    if (error instanceof RankingError) throw error
+    throw new RankingError(extractErrorMessage(error), error.response?.status)
+  }
+}
+
+export async function pingPresence() {
+  try {
+    const response = await api.post('/ranking/ping')
+    return parseResponse(response)
+  } catch (error) {
+    if (error instanceof RankingError) throw error
+    throw new RankingError(extractErrorMessage(error), error.response?.status)
+  }
+}
+
+/** @deprecated Use getMyRanking */
+export const getMyRank = getMyRanking

@@ -34,7 +34,7 @@ async function getLeaderboard(type = 'alltime', limit = 50) {
 
   const userIds = result.map((e) => e.userId)
   const users = await User.find({ _id: { $in: userIds } })
-    .select('username xp level rank currentStreak')
+    .select('username xp level rank currentStreak totalSprints')
     .lean()
 
   const userMap = Object.fromEntries(users.map((u) => [String(u._id), u]))

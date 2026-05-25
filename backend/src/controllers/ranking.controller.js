@@ -3,6 +3,7 @@ const {
   getLeaderboard,
   getUserRank,
   getOnlineUsers,
+  setUserOnline,
 } = require('../services/leaderboard.service')
 
 async function leaderboard(req, res, next) {
@@ -41,4 +42,13 @@ async function myRank(req, res, next) {
   }
 }
 
-module.exports = { leaderboard, online, myRank }
+async function ping(req, res, next) {
+  try {
+    await setUserOnline(req.user._id)
+    return sendSuccess(res, { online: true }, 'Presença atualizada')
+  } catch (err) {
+    next(err)
+  }
+}
+
+module.exports = { leaderboard, online, myRank, ping }

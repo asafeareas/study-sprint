@@ -1,5 +1,6 @@
 import { Navigate, Outlet } from 'react-router-dom'
 import { useAuthStore } from '../stores/useAuthStore'
+import { usePresence } from '../hooks/usePresence'
 import Layout from '../components/layout/Layout'
 import Login from '../pages/Login'
 import Register from '../pages/Register'
@@ -10,6 +11,8 @@ import Profile from '../pages/Profile'
 
 function ProtectedRoute() {
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated)
+  usePresence()
+
   if (!isAuthenticated) {
     return <Navigate to="/login" replace />
   }

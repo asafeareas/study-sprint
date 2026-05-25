@@ -15,7 +15,7 @@ import { useAuthStore } from '../stores/useAuthStore'
 import { useSprintStore } from '../stores/useSprintStore'
 import { getMe } from '../services/auth.service'
 import { getHistory } from '../services/sprint.service'
-import { getMyRank } from '../services/ranking.service'
+import { getMyRanking } from '../services/ranking.service'
 import { calculateXpPreview } from '../utils/xp'
 import { formatRelativeTime } from '../utils/time'
 
@@ -67,7 +67,7 @@ export default function Dashboard() {
         const [meRes, historyRes, rankRes] = await Promise.all([
           getMe(),
           getHistory(1, 5),
-          getMyRank().catch(() => null),
+          getMyRanking().catch(() => null),
         ])
         setUser(meRes.data.user)
         setRecentSessions(historyRes.data.sessions || [])
