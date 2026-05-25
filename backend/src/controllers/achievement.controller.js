@@ -1,6 +1,6 @@
 const Achievement = require('../models/Achievement')
 const { sendSuccess, AppError } = require('../utils/response')
-const { seedAchievements } = require('../services/achievement.service')
+const { seedAchievements, buildUnlockMap } = require('../services/achievement.service')
 
 async function getAll(req, res, next) {
   try {
@@ -13,18 +13,33 @@ async function getAll(req, res, next) {
 
 async function getMine(req, res, next) {
   try {
-    await req.user.populate('achievements')
-    const all = await Achievement.find()
-    const ownedKeys = new Set(req.user.achievements.map((a) => a.key))
+    await req.user.populate([
+      { path: 'achievements' },
+      { path: 'achievementUnlocks.achievementId' },
+    ])
 
-    const withStatus = all.map((a) => ({
-      ...a.toObject(),
-      unlocked: ownedKeys.has(a.key),
-    }))
+    const all = await Achievement.find().lean()
+    const ownedKeys = new Set(req.user.achievements.map((a) => a.key))
+    const unlockMap = buildUnlockMap(req.user)
+
+    const withStatus = all.map((a) => {
+      const unlocked = ownedKeys.has(a.key)
+      const unlockedAt =
+        unlockMap[a.key] ||
+        unlockMap[String(a._id)] ||
+        null
+
+      return {
+        ...a,
+        unlocked,
+        unlockedAt,
+      }
+    })
 
     return sendSuccess(res, {
       achievements: req.user.achievements,
       all: withStatus,
+      unlockMap,
     })
   } catch (err) {
     next(err)

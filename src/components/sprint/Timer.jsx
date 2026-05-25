@@ -1,10 +1,11 @@
 import { useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Play, Pause, RotateCcw, X } from 'lucide-react'
+import { Play, Pause, RotateCcw, X, Volume2, VolumeX } from 'lucide-react'
 import clsx from 'clsx'
 import { Button } from '../ui'
 import { formatTime } from '../../utils/time'
-import { useTimerBeep } from '../../hooks/useTimerBeep'
+import { useTimerSounds } from '../../hooks/useTimerSounds'
+import { useSettingsStore } from '../../stores/useSettingsStore'
 
 const RADIUS = 90
 const CIRCUMFERENCE = 2 * Math.PI * RADIUS
@@ -46,12 +47,20 @@ export default function Timer({
   onPause,
   onResume,
   onAbandon,
+  loading = false,
 }) {
   const remaining = Math.max(0, durationSeconds - elapsed)
   const progress = durationSeconds > 0 ? elapsed / durationSeconds : 0
   const strokeOffset = CIRCUMFERENCE * (1 - progress)
 
-  useTimerBeep(remaining, status === 'running')
+  const timerSound = useSettingsStore((s) => s.timerSound)
+  const setTimerSound = useSettingsStore((s) => s.setTimerSound)
+
+  useTimerSounds({
+    remainingSeconds: remaining,
+    elapsed,
+    status,
+  })
 
   const isIdle = status === 'idle'
   const isRunning = status === 'running'
@@ -60,6 +69,15 @@ export default function Timer({
 
   return (
     <div className="relative flex flex-col items-center">
+      <button
+        type="button"
+        onClick={() => setTimerSound(!timerSound)}
+        className="absolute -right-2 -top-2 z-10 flex h-9 w-9 items-center justify-center rounded-full border border-border bg-surface text-muted hover:text-primary"
+        title={timerSound ? 'Desativar sons' : 'Ativar sons'}
+      >
+        {timerSound ? <Volume2 className="h-4 w-4" /> : <VolumeX className="h-4 w-4" />}
+      </button>
+
       <div className="relative">
         {isCompleted && <XpParticles />}
 
@@ -121,7 +139,11 @@ export default function Timer({
 
       <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
         {isIdle && (
-          <Button onClick={onStart} className="min-w-[140px] font-display tracking-wider">
+          <Button
+            onClick={onStart}
+            loading={loading}
+            className="min-w-[140px] font-display tracking-wider"
+          >
             <Play className="h-4 w-4" />
             INICIAR
           </Button>

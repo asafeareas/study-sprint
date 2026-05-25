@@ -1,4 +1,5 @@
 import { Badge } from '../ui'
+import HeaderSettings from './HeaderSettings'
 import { useAuthStore } from '../../stores/useAuthStore'
 
 export default function Header() {
@@ -18,6 +19,7 @@ export default function Header() {
       </div>
 
       <div className="flex items-center gap-3">
+        <HeaderSettings />
         <Badge variant="xp">{user.xp?.toLocaleString('pt-BR')} XP</Badge>
         <Badge variant="rank">{user.rank}</Badge>
         {user.currentStreak > 0 && (

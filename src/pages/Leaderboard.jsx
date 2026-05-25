@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query'
 import { motion } from 'framer-motion'
 import clsx from 'clsx'
 import { Badge, ProgressBar } from '../components/ui'
+import { LeaderboardRowSkeleton } from '../components/ui/Skeleton'
 import { useAuthStore } from '../stores/useAuthStore'
 import {
   getLeaderboard,
@@ -146,7 +147,7 @@ export default function Leaderboard() {
   const showMyExtraRow = currentUserId && !isInTop50 && myRanking?.position
 
   return (
-    <div className="pb-36">
+    <div className="pb-44 md:pb-36">
       {/* Header */}
       <header className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
@@ -212,11 +213,9 @@ export default function Leaderboard() {
             </thead>
             <tbody>
               {isLoading ? (
-                <tr>
-                  <td colSpan={5} className="px-4 py-12 text-center text-muted">
-                    Carregando ranking...
-                  </td>
-                </tr>
+                Array.from({ length: 10 }, (_, i) => (
+                  <LeaderboardRowSkeleton key={i} />
+                ))
               ) : entries.length === 0 ? (
                 <tr>
                   <td colSpan={5} className="px-4 py-12 text-center text-muted">
@@ -252,7 +251,7 @@ export default function Leaderboard() {
       </div>
 
       {/* Sticky — Sua Posição */}
-      <div className="fixed bottom-0 left-16 right-0 z-30 border-t border-border bg-surface/95 px-6 py-4 backdrop-blur-md">
+      <div className="fixed bottom-16 left-0 right-0 z-30 border-t border-border bg-surface/95 px-4 py-4 backdrop-blur-md md:bottom-0 md:left-16 md:px-6 lg:left-56">
         <div className="mx-auto flex max-w-4xl flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <p className="text-xs uppercase tracking-widest text-muted">Sua posição</p>

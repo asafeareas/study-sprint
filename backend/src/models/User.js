@@ -37,6 +37,12 @@ const userSchema = new mongoose.Schema(
     longestStreak: { type: Number, default: 0 },
     lastSprintDate: { type: Date, default: null },
     achievements: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Achievement' }],
+    achievementUnlocks: [
+      {
+        achievementId: { type: mongoose.Schema.Types.ObjectId, ref: 'Achievement' },
+        unlockedAt: { type: Date, default: Date.now },
+      },
+    ],
   },
   { timestamps: true },
 )

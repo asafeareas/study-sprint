@@ -4,6 +4,7 @@ import { Button } from '../components/ui'
 import AuthShell from '../components/auth/AuthShell'
 import AuthField from '../components/auth/AuthField'
 import { login } from '../services/auth.service'
+import { toast } from '../components/ui/ToastProvider'
 import { useAuthStore } from '../stores/useAuthStore'
 
 export default function Login() {
@@ -30,9 +31,12 @@ export default function Login() {
     try {
       const { data } = await login(email, password)
       authLogin(data.user, data.token)
+      toast.success(`Bem-vindo, ${data.user.username}!`)
       navigate('/dashboard', { replace: true })
     } catch (err) {
-      setError(err.message || 'Falha ao entrar. Tente novamente.')
+      const msg = err.message || 'Falha ao entrar. Tente novamente.'
+      setError(msg)
+      toast.error(msg)
       triggerShake()
     } finally {
       setLoading(false)

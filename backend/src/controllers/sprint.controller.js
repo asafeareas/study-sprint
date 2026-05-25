@@ -81,8 +81,17 @@ async function complete(req, res, next) {
 
     await updateLeaderboard(user._id, xpGained, user.xp)
 
-    const newAchievements = await checkAndAwardAchievements(user)
+    const sprintContext = { completedAt: session.completedAt }
+    let newAchievements = await checkAndAwardAchievements(user, sprintContext)
+
     if (newAchievements.length > 0) {
+      await user.save()
+      await updateLeaderboard(user._id, 0, user.xp)
+    }
+
+    const rankAchievements = await checkAndAwardAchievements(user, sprintContext)
+    if (rankAchievements.length > 0) {
+      newAchievements = [...newAchievements, ...rankAchievements]
       await user.save()
       await updateLeaderboard(user._id, 0, user.xp)
     }

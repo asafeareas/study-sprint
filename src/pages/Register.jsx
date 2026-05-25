@@ -4,6 +4,7 @@ import { Button } from '../components/ui'
 import AuthShell from '../components/auth/AuthShell'
 import AuthField from '../components/auth/AuthField'
 import { register } from '../services/auth.service'
+import { toast } from '../components/ui/ToastProvider'
 import { useAuthStore } from '../stores/useAuthStore'
 
 const RANKS = [
@@ -73,9 +74,12 @@ export default function Register() {
     try {
       const { data } = await register(username.trim(), email.trim(), password)
       authLogin(data.user, data.token)
+      toast.success('Conta criada! Boa jornada de estudos.')
       navigate('/dashboard', { replace: true })
     } catch (err) {
-      setError(err.message || 'Falha ao criar conta. Tente novamente.')
+      const msg = err.message || 'Falha ao criar conta. Tente novamente.'
+      setError(msg)
+      toast.error(msg)
       triggerShake()
     } finally {
       setLoading(false)

@@ -8,6 +8,7 @@ import Dashboard from '../pages/Dashboard'
 import Sprint from '../pages/Sprint'
 import Leaderboard from '../pages/Leaderboard'
 import Profile from '../pages/Profile'
+import NotFound from '../pages/NotFound'
 
 function ProtectedRoute() {
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated)
@@ -50,5 +51,5 @@ export const routes = [
     ],
   },
   { path: '/', element: <Navigate to="/dashboard" replace /> },
-  { path: '*', element: <Navigate to="/dashboard" replace /> },
+  { path: '*', element: <NotFound /> },
 ]

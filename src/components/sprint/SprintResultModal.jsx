@@ -1,4 +1,6 @@
+import { useEffect } from 'react'
 import { Modal, Badge } from '../ui'
+import { useAchievementToastStore } from '../../stores/useAchievementToastStore'
 
 export default function SprintResultModal({
   isOpen,
@@ -8,7 +10,14 @@ export default function SprintResultModal({
   previousLevel,
   newAchievements = [],
 }) {
+  const pushAchievements = useAchievementToastStore((s) => s.pushAchievements)
   const leveledUp = user && previousLevel && user.level > previousLevel
+
+  useEffect(() => {
+    if (isOpen && newAchievements.length > 0) {
+      pushAchievements(newAchievements)
+    }
+  }, [isOpen, newAchievements, pushAchievements])
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} title="Sprint completo!">
@@ -41,7 +50,9 @@ export default function SprintResultModal({
                   <span className="text-lg">{a.icon}</span>
                   <span className="text-foreground">{a.name}</span>
                   {a.xpReward > 0 && (
-                    <span className="ml-auto font-display text-xs text-accent">+{a.xpReward} XP</span>
+                    <span className="ml-auto font-display text-xs text-accent">
+                      +{a.xpReward} XP
+                    </span>
                   )}
                 </li>
               ))}

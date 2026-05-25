@@ -4,9 +4,14 @@ import { motion } from 'framer-motion'
 import { ArrowLeft } from 'lucide-react'
 import Timer from '../components/sprint/Timer'
 import SprintResultModal from '../components/sprint/SprintResultModal'
+import ResumeSprintModal from '../components/sprint/ResumeSprintModal'
 import { ProgressBar } from '../components/ui'
+import { toast } from '../components/ui/ToastProvider'
 import { useAuthStore } from '../stores/useAuthStore'
 import { useSprintStore } from '../stores/useSprintStore'
+import { useXpFloatStore } from '../stores/useXpFloatStore'
+import { useWakeLock } from '../hooks/useWakeLock'
+import { useSprintTabTitle } from '../hooks/useSprintTabTitle'
 import {
   startSprint as apiStartSprint,
   completeSprint as apiCompleteSprint,
@@ -47,10 +52,7 @@ function FloatingParticles() {
             width: p.size,
             height: p.size,
           }}
-          animate={{
-            y: [0, -30, 0],
-            opacity: [0.2, 0.6, 0.2],
-          }}
+          animate={{ y: [0, -30, 0], opacity: [0.2, 0.6, 0.2] }}
           transition={{
             duration: p.duration,
             delay: p.delay,
@@ -68,6 +70,7 @@ export default function Sprint() {
   const location = useLocation()
   const user = useAuthStore((s) => s.user)
   const setUser = useAuthStore((s) => s.setUser)
+  const spawnXp = useXpFloatStore((s) => s.spawn)
 
   const {
     sessionId,
@@ -81,20 +84,25 @@ export default function Sprint() {
     startSprint,
     pauseSprint,
     resumeSprint,
-    completeSprint,
     abandonSprint,
     tick,
     reset,
     configure,
+    hasPersistedSession,
   } = useSprintStore()
 
   const [quoteIndex, setQuoteIndex] = useState(0)
   const [apiLoading, setApiLoading] = useState(false)
   const [error, setError] = useState('')
   const [resultModal, setResultModal] = useState(null)
+  const [showResume, setShowResume] = useState(false)
+  const [resumeChecked, setResumeChecked] = useState(false)
 
   const startedRef = useRef(false)
   const completedRef = useRef(false)
+
+  useWakeLock(status === 'running')
+  useSprintTabTitle(status, durationSeconds, elapsed)
 
   const progressPercent =
     durationSeconds > 0 ? (elapsed / durationSeconds) * 100 : 0
@@ -112,6 +120,14 @@ export default function Sprint() {
     return () => clearInterval(id)
   }, [status, tick])
 
+  useEffect(() => {
+    if (resumeChecked) return
+    setResumeChecked(true)
+    if (hasPersistedSession() && !location.state?.autoStart) {
+      setShowResume(true)
+    }
+  }, [resumeChecked, hasPersistedSession, location.state?.autoStart])
+
   async function initSession() {
     if (sessionId || apiLoading) return
     setApiLoading(true)
@@ -120,30 +136,40 @@ export default function Sprint() {
       const { data } = await apiStartSprint(subject, duration)
       setSessionId(data.sessionId)
       startSprint()
+      toast.success('Sprint iniciado. Boa sessão!')
     } catch (err) {
       setError(err.message)
+      toast.error(err.message)
     } finally {
       setApiLoading(false)
     }
   }
 
   useEffect(() => {
-    if (!location.state?.autoStart && status === 'idle' && !sessionId) {
+    if (!location.state?.autoStart || showResume) return
+    if (!startedRef.current && status === 'idle') {
+      startedRef.current = true
+      initSession()
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [location.state?.autoStart, showResume])
+
+  useEffect(() => {
+    if (!location.state?.autoStart && status === 'idle' && !sessionId && !showResume) {
       configure({
         subject: '',
         duration: 25,
         currentStreak: user?.currentStreak ?? 0,
       })
     }
-  }, [location.state?.autoStart, status, sessionId, configure, user?.currentStreak])
-
-  useEffect(() => {
-    if (location.state?.autoStart && !startedRef.current && status === 'idle') {
-      startedRef.current = true
-      initSession()
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [location.state?.autoStart])
+  }, [
+    location.state?.autoStart,
+    status,
+    sessionId,
+    configure,
+    user?.currentStreak,
+    showResume,
+  ])
 
   useEffect(() => {
     if (status !== 'completed' || !sessionId || completedRef.current) return
@@ -155,6 +181,8 @@ export default function Sprint() {
       try {
         const { data } = await apiCompleteSprint(sessionId, duration)
         setUser(data.user)
+        spawnXp(data.xpGained, '50%', '45%')
+        toast.success(`+${data.xpGained} XP ganhos!`, 'Sprint completo')
         setResultModal({
           xpGained: data.xpGained,
           user: data.user,
@@ -163,22 +191,24 @@ export default function Sprint() {
         })
       } catch (err) {
         setError(err.message)
+        toast.error(err.message)
         completedRef.current = false
       }
     }
 
     finish()
-  }, [status, sessionId, duration, setUser, user?.level])
+  }, [status, sessionId, duration, setUser, user?.level, spawnXp])
 
   async function handleAbandon() {
     if (sessionId) {
       try {
         await apiAbandonSprint(sessionId)
       } catch {
-        // segue com reset local
+        // segue
       }
     }
     reset()
+    toast.info('Sprint abandonado')
     navigate('/dashboard')
   }
 
@@ -198,6 +228,23 @@ export default function Sprint() {
     }
   }
 
+  function handleResumePersisted() {
+    setShowResume(false)
+    if (status === 'paused') {
+      resumeSprint()
+    }
+  }
+
+  function handleDiscardPersisted() {
+    reset()
+    setShowResume(false)
+    configure({
+      subject: '',
+      duration: 25,
+      currentStreak: user?.currentStreak ?? 0,
+    })
+  }
+
   const displayXp = calculateXpPreview(duration, user?.currentStreak ?? 0) || xpPreview
 
   return (
@@ -209,9 +256,7 @@ export default function Sprint() {
         className="group fixed left-4 top-4 z-20 flex items-center gap-2 rounded-lg border border-transparent px-3 py-2 text-sm text-foreground-secondary opacity-0 transition-all hover:border-border hover:bg-surface/80 hover:opacity-100 focus:opacity-100"
       >
         <ArrowLeft className="h-4 w-4" />
-        <span className="opacity-0 transition-opacity group-hover:opacity-100">
-          Voltar
-        </span>
+        <span className="opacity-0 transition-opacity group-hover:opacity-100">Voltar</span>
       </Link>
 
       <div className="relative z-10 flex min-h-svh flex-col items-center justify-center px-4 py-16">
@@ -238,6 +283,7 @@ export default function Sprint() {
           onPause={pauseSprint}
           onResume={resumeSprint}
           onAbandon={handleAbandon}
+          loading={apiLoading}
         />
 
         {error && (
@@ -254,6 +300,15 @@ export default function Sprint() {
           />
         </div>
       </div>
+
+      <ResumeSprintModal
+        isOpen={showResume}
+        onResume={handleResumePersisted}
+        onDiscard={handleDiscardPersisted}
+        subject={subject}
+        elapsed={elapsed}
+        duration={duration}
+      />
 
       <SprintResultModal
         isOpen={Boolean(resultModal)}

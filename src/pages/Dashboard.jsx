@@ -10,6 +10,7 @@ import {
 } from 'lucide-react'
 import clsx from 'clsx'
 import { Card, Button } from '../components/ui'
+import { StatCardSkeleton } from '../components/ui/Skeleton'
 import AnimatedNumber from '../components/ui/AnimatedNumber'
 import { useAuthStore } from '../stores/useAuthStore'
 import { useSprintStore } from '../stores/useSprintStore'
@@ -96,28 +97,39 @@ export default function Dashboard() {
     <div className="space-y-6">
       {/* Stats */}
       <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <StatCard
-          icon={Target}
-          label="Total de Sprints"
-          value={user?.totalSprints ?? 0}
-        />
-        <StatCard
-          icon={Clock}
-          label="Total de Minutos"
-          value={user?.totalMinutes ?? 0}
-        />
-        <StatCard
-          icon={Flame}
-          label="Streak Atual"
-          value={user?.currentStreak ?? 0}
-          suffix={user?.currentStreak === 1 ? ' dia' : ' dias'}
-        />
-        <StatCard
-          icon={Trophy}
-          label="Posição no Ranking"
-          value={rankPosition ?? '—'}
-          suffix={rankPosition ? 'º' : ''}
-        />
+        {loading ? (
+          <>
+            <StatCardSkeleton />
+            <StatCardSkeleton />
+            <StatCardSkeleton />
+            <StatCardSkeleton />
+          </>
+        ) : (
+          <>
+            <StatCard
+              icon={Target}
+              label="Total de Sprints"
+              value={user?.totalSprints ?? 0}
+            />
+            <StatCard
+              icon={Clock}
+              label="Total de Minutos"
+              value={user?.totalMinutes ?? 0}
+            />
+            <StatCard
+              icon={Flame}
+              label="Streak Atual"
+              value={user?.currentStreak ?? 0}
+              suffix={user?.currentStreak === 1 ? ' dia' : ' dias'}
+            />
+            <StatCard
+              icon={Trophy}
+              label="Posição no Ranking"
+              value={rankPosition ?? '—'}
+              suffix={rankPosition ? 'º' : ''}
+            />
+          </>
+        )}
       </section>
 
       <div className="grid gap-6 lg:grid-cols-3">

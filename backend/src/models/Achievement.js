@@ -26,7 +26,7 @@ const achievementSchema = new mongoose.Schema(
     condition: {
       type: {
         type: String,
-        enum: ['sprints', 'streak', 'level', 'minutes'],
+        enum: ['sprints', 'streak', 'level', 'minutes', 'top_rank', 'night_sprint'],
         required: true,
       },
       value: {
