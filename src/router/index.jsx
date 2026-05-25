@@ -1,5 +1,6 @@
 import { Navigate, Outlet } from 'react-router-dom'
 import { useAuthStore } from '../stores/useAuthStore'
+import Layout from '../components/layout/Layout'
 import Login from '../pages/Login'
 import Register from '../pages/Register'
 import Dashboard from '../pages/Dashboard'
@@ -34,10 +35,15 @@ export const routes = [
   {
     element: <ProtectedRoute />,
     children: [
-      { path: '/dashboard', element: <Dashboard /> },
       { path: '/sprint', element: <Sprint /> },
-      { path: '/leaderboard', element: <Leaderboard /> },
-      { path: '/profile', element: <Profile /> },
+      {
+        element: <Layout />,
+        children: [
+          { path: '/dashboard', element: <Dashboard /> },
+          { path: '/leaderboard', element: <Leaderboard /> },
+          { path: '/profile', element: <Profile /> },
+        ],
+      },
     ],
   },
   { path: '/', element: <Navigate to="/dashboard" replace /> },
