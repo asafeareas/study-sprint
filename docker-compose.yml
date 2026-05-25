@@ -1,0 +1,55 @@
+services:
+  mongo:
+    image: mongo:7
+    container_name: study-sprint-mongo
+    restart: unless-stopped
+    ports:
+      - '27017:27017'
+    volumes:
+      - mongo_data:/data/db
+    healthcheck:
+      test: ['CMD', 'mongosh', '--quiet', '--eval', "db.adminCommand('ping').ok"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+
+  redis:
+    image: redis:7-alpine
+    container_name: study-sprint-redis
+    restart: unless-stopped
+    ports:
+      - '6379:6379'
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
+
+  api:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: study-sprint-api
+    restart: unless-stopped
+    ports:
+      - '3001:3001'
+    environment:
+      PORT: 3001
+      NODE_ENV: development
+      MONGODB_URI: mongodb://mongo:27017/study-sprint
+      REDIS_URL: redis://redis:6379
+      JWT_SECRET: ${JWT_SECRET:-study_sprint_dev_secret_change_in_prod}
+      JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-7d}
+    depends_on:
+      mongo:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+volumes:
+  mongo_data:
+  redis_data:
